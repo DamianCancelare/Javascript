@@ -1,87 +1,114 @@
 //Bienvenida
 alert('Bienvenido a Gotique Poupee')
 
-const comprarProducto = () => {
-    let producto = ''
-    let cantidad = 0
-    let precio = 0
-    let subtotal = 0
-    let seguirComprando = false
+// Creamos un array vacío para el carrito de compras
+const carrito = [];
+
+//Ordenar productos de menor a mayor precio
+const ordenarMenorMayor = () => {
+    productos.sort((a,b)=> a.precio - b.precio);
+    mostrarListaOrdenada();
+}
+
+//Ordenar productos de mayor a menor precio
+const ordenarMayorMenor = () => {
+    productos.sort((a,b)=> b.precio - a.precio);
+    mostrarListaOrdenada();
+}
+
+const mostrarListaOrdenada = () => {
+    const listaOrdenada = productos.map(producto => {
+        return '- '+producto.nombre+' $'+producto.precio
+    });
+    alert('Lista de precios:'+'\n\n'+listaOrdenada.join('\n'))
+    comprarProductos(listaOrdenada)
+}
+
+const comprarProductos = (listaDeProductos) => {
+    let otroProducto;
+    let productoNombre = '';
+    let productoCantidad = 0;
 
     do {
-        producto = prompt ('Querés comprar blusa, pollera o vestido?')
-        cantidad = parseInt(prompt('Cuantos queres comprar?'))
+        productoNombre = prompt ('¿Que producto desea comprar?'+'\n\n'+listaDeProductos.join('\n'));
+        productoCantidad = parseInt(prompt('¿Cuántos querés comprar?'));
 
-        let cantidadValidada = validarCantidad(cantidad)
+        const producto = productos.find(producto => producto.nombre.toLowerCase() === productoNombre.toLowerCase());
 
-        switch (producto){
-            case 'blusa':
-                precio = 3500
-                break;
-            case 'pollera':
-                precio = 4000
-                break;
-            case 'vestido':
-                precio = 6000
-                break;
-
-            default:
-                alert('Alguno de los datos ingresados no es correcto!')
-                precio = 0
-                cantidadValidada = 0
-                break
+        if (producto) {
+            agregarAlCarrito(producto, producto.id, productoCantidad)
+        } else {
+            alert('El producto no se encuentra en el catálogo.')
         }
 
+        otroProducto = confirm('Desea agregar otro producto?');
+    } while (otroProducto)
 
-        subtotal += precio * cantidadValidada
+    confirmarCompra()
+};
 
-        seguirComprando = confirm('Desea seguir comprando?')
-    } while (seguirComprando)
-
-    return subtotal
-}
-
-const validarCantidad = (cantidad) => {
-    while (Number.isNaN(cantidad) || cantidad === 0 ) {
-        alert('Debe de agregar una cantidad válida!')
-        cantidad = parseInt(prompt('Cuantos queres comprar?'))
+const agregarAlCarrito = (producto, productoId, productoCantidad) => {
+    const productoRepetido = carrito.find(producto => producto.id === productoId)
+    if (!productoRepetido) {
+        producto.cantidad += productoCantidad
+        carrito.push(producto)
+    } else {
+        productoRepetido.cantidad += productoCantidad;
     }
-
-    return cantidad
+    console.log(carrito)
 }
 
-const aplicarDescuento = (subtotal) => {
-    const descuento10 = 0.90
-    if (subtotal >= 10000){
-        return subtotal * descuento10
-    }   else {
-        return subtotal
+const eliminarProductoCarrito = (productoNombre) => {
+    carrito.forEach((producto, index) => {
+        if (producto.nombre.toLowerCase() === productoNombre.toLowerCase()) {
+            if (producto.cantidad > 1) {
+                producto.cantidad--
+            } else {
+                carrito.splice(index, 1)
+            }
+        }
+    })
+    confirmarCompra()
+};
+
+const confirmarCompra = () => {
+    const listaCarrito = carrito.map(producto => {
+        return '- '+producto.nombre+' | Cantidad: '+producto.cantidad
+    });
+
+    const confirmar = confirm('Checkout: '
+        +'\n\n'+listaCarrito.join('\n')
+        +'\n\nPara continuar presione "Aceptar" sino "Cancelar" para eliminar un producto.'
+    )
+
+    if (confirmar) {
+        finalizarCompra(listaCarrito)
+    } else {
+        const productoAEliminar = prompt('Ingrese el nombre del producto a eliminar:')
+        eliminarProductoCarrito(productoAEliminar)
     }
-}
+};
 
-const calcularEnvio = (subtotal) => {
-    const quiereEnvio = confirm ('Quiere envío a domicilio?')
+const finalizarCompra = (listaCarrito) => {
+    const cantidadTotal = carrito.reduce((acc, item) => acc + item.cantidad, 0)
+    const precioTotal = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0)
 
-    if (quiereEnvio && subtotal >= 9000){
-        alert('Tenés envío gratis! El total de la compra es: $'+subtotal)
-    } else if (quiereEnvio && subtotal < 9000){
-        subtotal += 1000
-    alert('El envío cuesta $1000. El total de la compra con envío es: $'+subtotal)
-    } else{
-        alert('El total de tu compra es: $'+subtotal)
+    alert('Detalle de su compra:'
+        +'\n\n'+listaCarrito.join('\n')
+        +'\n\nTotal de productos: '+cantidadTotal
+        +'\n\nEl total de su compra es: $'+precioTotal
+        +'\n\nGracias por su compra!!!'
+    )
+};
+
+const comprar = () => {
+    const productosBaratos = confirm('¿Querés ordenar los productos del más barato al mas caro?')
+
+    if (productosBaratos) {
+        ordenarMenorMayor()
+    } else {
+        ordenarMayorMenor()
     }
+};
 
-    return subtotal
-}
-
-const mostrarDetalleDeCompra = (precioFinal) => {
-    alert('El total a pagar es de $'+precioFinal+'. Gracias por su compra!')
-}
-
-const subtotal = comprarProducto()
-
-const subtotalConDescuento = aplicarDescuento (subtotal)
-
-const precioFinal = calcularEnvio(subtotalConDescuento)
-
-mostrarDetalleDeCompra(precioFinal)
+comprar()
